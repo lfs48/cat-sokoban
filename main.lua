@@ -25,13 +25,27 @@ function love.load()
         [Cells.wall] = {1, .58, .82},
         [Cells.empty] = {1, 1, 1},
     }
-    NextCells = {
+    --Cell to render in player's next position when moving
+    --Also serves as list of cells that can be moved into
+    MoveNextCells = {
         [Cells.empty] = Cells.player,
         [Cells.storage] = Cells.playerOnStorage,
     }
-    PrevCells = {
+    --Cell to render in player's previous position when moving
+    MovePrevCells = {
         [Cells.player] = Cells.empty,
         [Cells.playerOnStorage] = Cells.storage,
+    }
+    --Cell to render in pushable object's previous position when pushing
+    --Also serves as list of cells that can be pushed
+    PushPrevCells = {
+        [Cells.box] = Cells.player,
+        [Cells.boxOnStorage] = Cells.playerOnStorage,
+    }
+    --Cell to render in pushable object's next position when pushing
+    PushNextCells = {
+        [Cells.empty] = Cells.box,
+        [Cells.storage] = Cells.boxOnStorage,
     }
 
     --Initialize level
@@ -83,8 +97,8 @@ function love.keypressed(key)
             y = PlayerPos.y + dy,
         }
 
-        if IsValidPos(nextPos) then
-            UpdatePlayerPos(nextPos)
+        if IsValidMove(nextPos, dx, dy, false) then
+            UpdatePlayerPos(nextPos, dx, dy)
         end
 
     end
@@ -120,7 +134,6 @@ function DrawCell(tableX, tableY, cell)
 
     --Draw cell text
     love.graphics.setColor(1, 1, 1)
-    local value = ''
     love.graphics.print(
         Level[tableY][tableX], --value
         x, --x pos
@@ -129,7 +142,7 @@ function DrawCell(tableX, tableY, cell)
 end
 
 --Determine if player can move to a position
-function IsValidPos(pos)
+function IsValidMove(pos, dx, dy, isPush)
     local x = pos.x
     local y = pos.y
 
@@ -137,25 +150,48 @@ function IsValidPos(pos)
     if y < 1 or y > #Level then return false end
     if x < 1 or x > #Level[y] then return false end
 
-    --Prevent movement to non-empty cells
     local cell = Level[pos.y][pos.x]
-    if NextCells[cell] then return true end
+
+    --Allow moving into pushable cell if one cell ahead is also valid
+    if not isPush and PushPrevCells[cell] then
+        local pushPos = {
+            x = pos.x + dx,
+            y = pos.y + dy,
+        }
+        return IsValidMove(pushPos, 0, 0, true)
+    end
+
+    --Allow moving into movable cells
+    if MoveNextCells[cell] then return true end
 
     return false
 end
 
---Move player to new position and update position vars
-function UpdatePlayerPos(pos)
+--Move player to new position and update level cells
+function UpdatePlayerPos(pos, dx, dy)
 
     --Update position
     local prevPos = PlayerPos
     local prevCell = Level[prevPos.y][prevPos.x]
+    local nextCell = Level[pos.y][pos.x]
     PlayerPos = pos
 
-    --Update cell being moved to
-    local nextCell = Level[pos.y][pos.x]
-    Level[pos.y][pos.x] = NextCells[nextCell]
+    --If pushing, update next cell and one cell ahead
+    if PushPrevCells[nextCell] then
+        local pushX = pos.x + dx
+        local pushY = pos.y + dy
+        local pushCell = Level[pushY][pushX]
+        --Update cell being pushed
+        Level[pos.y][pos.x] = PushPrevCells[nextCell]
+        --Update push destination cell
+        Level[pushY][pushX] = PushNextCells[pushCell]
+    --If not pushing, then moving
+    else
+        --Update cell being moved into
+        Level[pos.y][pos.x] = MoveNextCells[nextCell]
+    end
 
     --Update cell being moved from
-    Level[prevPos.y][prevPos.x] = PrevCells[prevCell]
+    Level[prevPos.y][prevPos.x] = MovePrevCells[prevCell]
+
 end
