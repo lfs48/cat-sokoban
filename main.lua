@@ -25,6 +25,14 @@ function love.load()
         [Cells.wall] = {1, .58, .82},
         [Cells.empty] = {1, 1, 1},
     }
+    NextCells = {
+        [Cells.empty] = Cells.player,
+        [Cells.storage] = Cells.playerOnStorage,
+    }
+    PrevCells = {
+        [Cells.player] = Cells.empty,
+        [Cells.playerOnStorage] = Cells.storage,
+    }
 
     --Initialize level
     Level = {
@@ -131,7 +139,7 @@ function IsValidPos(pos)
 
     --Prevent movement to non-empty cells
     local cell = Level[pos.y][pos.x]
-    if cell == Cells.empty or cell == Cells.storage then return true end
+    if NextCells[cell] then return true end
 
     return false
 end
@@ -146,20 +154,8 @@ function UpdatePlayerPos(pos)
 
     --Update cell being moved to
     local nextCell = Level[pos.y][pos.x]
-    --If player is moving onto storage, update to player on storage char
-    if nextCell == Cells.storage then
-        Level[pos.y][pos.x] = Cells.playerOnStorage
-    --Else update to player char
-    else
-        Level[pos.y][pos.x] = Cells.player
-    end
+    Level[pos.y][pos.x] = NextCells[nextCell]
 
     --Update cell being moved from
-    --If player was on storage, update prev cell to storage
-    if prevCell == Cells.playerOnStorage then
-        Level[prevPos.y][prevPos.x] = Cells.storage
-    --Else update prev cell to empty
-    else
-        Level[prevPos.y][prevPos.x] = Cells.empty
-    end
+    Level[prevPos.y][prevPos.x] = PrevCells[prevCell]
 end
