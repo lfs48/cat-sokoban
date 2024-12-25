@@ -69,6 +69,9 @@ function Level:new(o)
         end
     end
 
+    --Field to track level completion
+    self.completed = false
+
     return level
 end
 
@@ -90,7 +93,12 @@ function Level:keypressed(key)
         }
 
         if self:isValidMove(nextPos, dx, dy, false) then
+            --Update level with movement
             self:updatePositions(nextPos, dx, dy)
+            --Determine if level is complete
+            if self:isComplete() then
+                self.completed = true
+            end
         end
 
     end
@@ -151,14 +159,31 @@ function Level:updatePositions(pos, dx, dy)
 
 end
 
+--Determine if level has been completed
+--A level is complete if there are no unstored boxes
+function Level:isComplete()
+    for y, row in ipairs(self) do
+        for x, cell in ipairs(row) do
+            if cell == cells.box then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+--Draw level
 function Level:draw()
-    --Draw level
     for y, row in ipairs(self) do
         for x, cell in ipairs(row) do
             if cell ~= cells.outOfBounds then
                 self:drawCell(x, y, cell)
             end
         end
+    end
+
+    if self.completed then
+        self:drawComplete()
     end
 end
 
@@ -185,5 +210,38 @@ function Level:drawCell(tableX, tableY, cell)
         self[tableY][tableX], --value
         x, --x pos
         y --y pos
+    )
+end
+
+--Draw level complete message
+function Level:drawComplete()
+    local message = 'Level Complete'
+    local width = 200
+    local height = 100
+
+    --Center
+    local windowWidth, windowHeight = love.window.getMode()
+    local dx = (windowWidth - width) / 2
+    local dy = (windowHeight - height) / 2
+    love.graphics.translate(dx, dy)
+
+    --Draw bg
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle(
+        'fill',
+        0, --x pos
+        0, --y pos
+        width, --width
+        height --height
+    )
+
+    --Draw cell text
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.printf(
+        message, --value
+        0, --x pos
+        height / 2, --y pos
+        width, --limit
+        "center"
     )
 end
