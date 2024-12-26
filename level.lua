@@ -1,5 +1,7 @@
 local util = require('util')
 
+local Level = {}
+
 --Cell size
 local cellSize = 23
 
@@ -47,8 +49,6 @@ local pushNextCells = {
     [cells.empty] = cells.box,
     [cells.storage] = cells.boxOnStorage,
 }
-
-Level = {}
 
 --Constructor
 function Level:new()
@@ -276,3 +276,5 @@ function Level:drawComplete()
         "center" --justify
     )
 end
+
+return Level
