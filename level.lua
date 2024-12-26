@@ -50,6 +50,24 @@ local pushNextCells = {
     [cells.storage] = cells.boxOnStorage,
 }
 
+--Static helper functions
+
+--Determine player x and y position from gamestate
+local function findPlayerPos(state)
+    for y, row in ipairs(state) do
+        for x, cell in ipairs(row) do
+            if cell == cells.player or cell == cells.playerOnStorage then
+                return {
+                    x = x,
+                    y = y
+                }
+            end
+        end
+    end
+
+    error("No player found")
+end
+
 --Constructor
 function Level:new()
     local level = {}
@@ -126,6 +144,11 @@ function Level:keypressed(key)
                 end
             end
         end
+
+        --On Z key press, undo last move
+        if key == 'z' and #self.states > 1 then
+            self:undoLastMove()
+        end
     end
 end
 
@@ -197,6 +220,12 @@ function Level:isComplete()
         end
     end
     return true
+end
+
+--Undo last move by returning to previous gamestate
+function Level:undoLastMove()
+    table.remove(self.states)
+    self.playerPos = findPlayerPos(self:currentState())
 end
 
 --Draw level
