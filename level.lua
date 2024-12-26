@@ -60,8 +60,10 @@ end
 
 --Initialize level
 function Level:initialize(layout)
-    --Initialize cells
-    self.cells = util.deepClone(layout)
+    --Initialize gamestate
+    self.states = {
+        util.deepClone(layout)
+    }
 
     --Initialize player position
     self.playerPos = {
@@ -80,6 +82,18 @@ function Level:initialize(layout)
 
     --Field to track level completion
     self.completed = false
+
+end
+
+--Get current gamestate (last entry in states table)
+function Level:currentState()
+    return self.states[#self.states]
+end
+
+--Update gamestate and player position
+function Level:advanceState(gameState, playerPos)
+    table.insert(self.states, gameState)
+    self.playerPos = playerPos
 end
 
 --Player controls
@@ -103,8 +117,9 @@ function Level:keypressed(key)
             }
 
             if self:isValidMove(nextPos, dx, dy, false) then
-                --Update level with movement
-                self:updatePositions(nextPos, dx, dy)
+                --Update gamestate
+                local newState = self:calcNewState(nextPos, dx, dy)
+                self:advanceState(newState, nextPos)
                 --Determine if level is complete
                 if self:isComplete() then
                     self.completed = true
@@ -120,10 +135,10 @@ function Level:isValidMove(pos, dx, dy, isPush)
     local y = pos.y
 
     --Prevent movement out of bounds
-    if y < 1 or y > #self.cells then return false end
-    if x < 1 or x > #self.cells[y] then return false end
+    if y < 1 or y > #self:currentState() then return false end
+    if x < 1 or x > #self:currentState()[y] then return false end
 
-    local cell = self.cells[y][x]
+    local cell = self:currentState()[y][x]
 
     --Allow moving into pushable cell if one cell ahead is also valid
     if not isPush and pushPrevCells[cell] then
@@ -140,39 +155,41 @@ function Level:isValidMove(pos, dx, dy, isPush)
     return false
 end
 
---Update player and box positions based on movement
-function Level:updatePositions(pos, dx, dy)
+--Determine and return new gamestate
+function Level:calcNewState(newPos, dx, dy)
+    local newState = util.deepClone(self:currentState())
 
     --Update position
-    local prevPos = self.playerPos
-    local prevCell = self.cells[prevPos.y][prevPos.x]
-    local nextCell = self.cells[pos.y][pos.x]
-    self.playerPos = pos
+    local prevCell = newState[self.playerPos.y][self.playerPos.x]
+    local nextCell = newState[newPos.y][newPos.x]
 
     --If pushing, update next cell and one cell ahead
     if pushPrevCells[nextCell] then
-        local pushX = pos.x + dx
-        local pushY = pos.y + dy
-        local pushCell = self.cells[pushY][pushX]
+        local pushPos = {
+            x = newPos.x + dx,
+            y = newPos.y + dy,
+        }
+        local pushCell = newState[pushPos.y][pushPos.x]
         --Update cell being pushed
-        self.cells[pos.y][pos.x] = pushPrevCells[nextCell]
+        newState[newPos.y][newPos.x] = pushPrevCells[nextCell]
         --Update push destination cell
-        self.cells[pushY][pushX] = pushNextCells[pushCell]
+        newState[pushPos.y][pushPos.x] = pushNextCells[pushCell]
     --If not pushing, then moving
     else
         --Update cell being moved into
-        self.cells[pos.y][pos.x] = moveNextCells[nextCell]
+        newState[newPos.y][newPos.x] = moveNextCells[nextCell]
     end
 
     --Update cell being moved from
-    self.cells[prevPos.y][prevPos.x] = movePrevCells[prevCell]
+    newState[self.playerPos.y][self.playerPos.x] = movePrevCells[prevCell]
 
+    return newState
 end
 
 --Determine if level has been completed
 --A level is complete if there are no unstored boxes
 function Level:isComplete()
-    for y, row in ipairs(self.cells) do
+    for y, row in ipairs(self:currentState()) do
         for x, cell in ipairs(row) do
             if cell == cells.box then
                 return false
@@ -185,8 +202,8 @@ end
 --Draw level
 function Level:draw()
     --Calc level width and height
-    local width = #self.cells[1] * cellSize
-    local height = #self.cells * cellSize
+    local width = #self:currentState()[1] * cellSize
+    local height = #self:currentState() * cellSize
     
     --Center
     local windowWidth, windowHeight = love.window.getMode()
@@ -194,7 +211,7 @@ function Level:draw()
     local dy = (windowHeight - height) / 2
     love.graphics.translate(dx, dy)
 
-    for y, row in ipairs(self.cells) do
+    for y, row in ipairs(self:currentState()) do
         for x, cell in ipairs(row) do
             if cell ~= cells.outOfBounds then
                 self:drawCell(x, y, cell)
@@ -229,7 +246,7 @@ function Level:drawCell(tableX, tableY, cell)
     --Draw cell text
     love.graphics.setColor(1, 1, 1)
     love.graphics.print(
-        self.cells[tableY][tableX], --value
+        self:currentState()[tableY][tableX], --value
         x, --x pos
         y --y pos
     )
