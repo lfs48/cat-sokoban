@@ -55,22 +55,22 @@ function Level:new(o)
     self.__index = self
 
     --Initialize player position
-    self.playerPos = {
+    level.playerPos = {
         x = 0,
         y = 0,
     }
     for y, row in ipairs(level) do
         for x, cell in ipairs(row) do
             if cell == cells.player or cell == cells.playerOnStorage then
-                self.playerPos.x = x
-                self.playerPos.y = y
+                level.playerPos.x = x
+                level.playerPos.y = y
                 break
             end
         end
     end
 
     --Field to track level completion
-    self.completed = false
+    level.completed = false
 
     return level
 end
