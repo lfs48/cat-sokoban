@@ -84,19 +84,7 @@ function Level:initialize(layout)
     }
 
     --Initialize player position
-    self.playerPos = {
-        x = 0,
-        y = 0,
-    }
-    for y, row in ipairs(layout) do
-        for x, cell in ipairs(row) do
-            if cell == cells.player or cell == cells.playerOnStorage then
-                self.playerPos.x = x
-                self.playerPos.y = y
-                break
-            end
-        end
-    end
+    self.playerPos = findPlayerPos(layout)
 
     --Field to track level completion
     self.completed = false
@@ -148,6 +136,11 @@ function Level:keypressed(key)
         --On Z key press, undo last move
         if key == 'z' and #self.states > 1 then
             self:undoLastMove()
+        end
+
+        --On R press, reset level to initial state
+        if key =='r' then
+            self:reset()
         end
     end
 end
@@ -226,6 +219,12 @@ end
 function Level:undoLastMove()
     table.remove(self.states)
     self.playerPos = findPlayerPos(self:currentState())
+end
+
+--Reset level to initial state
+function Level:reset()
+    local layout = util.deepClone(self.states[1])
+    self:initialize(layout)
 end
 
 --Draw level
