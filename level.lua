@@ -80,14 +80,15 @@ function Level:keypressed(key)
 
     --Only accept controls if level is not completed
     if not self.completed then
-        --On arrow key press, move player in direction pressed
-        if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
-            local dx = 0
-            local dy = 0
-            if key == 'left' then dx = -1 end
-            if key == 'right' then dx = 1 end
-            if key == 'up' then dy = -1 end
-            if key == 'down' then dy = 1 end
+        --On arrow key or WASD press, move player in direction pressed
+        local dx = 0
+        local dy = 0
+        if key == 'left' or key == 'a' then dx = -1 end
+        if key == 'right' or key == 'd' then dx = 1 end
+        if key == 'up' or key == 'w' then dy = -1 end
+        if key == 'down' or key == 's' then dy = 1 end
+
+        if dx ~= 0 or dy ~= 0 then
 
             local nextPos = {
                 x = self.playerPos.x + dx,
@@ -102,7 +103,6 @@ function Level:keypressed(key)
                     self.completed = true
                 end
             end
-
         end
     end
 end
