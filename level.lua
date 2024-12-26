@@ -177,6 +177,16 @@ end
 
 --Draw level
 function Level:draw()
+    --Calc level width and height
+    local width = #self[1] * cellSize
+    local height = #self * cellSize
+    
+    --Center
+    local windowWidth, windowHeight = love.window.getMode()
+    local dx = (windowWidth - width) / 2
+    local dy = (windowHeight - height) / 2
+    love.graphics.translate(dx, dy)
+
     for y, row in ipairs(self) do
         for x, cell in ipairs(row) do
             if cell ~= cells.outOfBounds then
@@ -184,6 +194,8 @@ function Level:draw()
             end
         end
     end
+
+    love.graphics.translate(-dx, -dy)
 
     if self.completed then
         self:drawComplete()
@@ -221,11 +233,12 @@ function Level:drawComplete()
     local message = 'Level Complete'
     local width = 200
     local height = 100
+    local offset = 200
 
     --Center
     local windowWidth, windowHeight = love.window.getMode()
     local dx = (windowWidth - width) / 2
-    local dy = (windowHeight - height) / 2
+    local dy = (windowHeight - height) / 2 + offset
     love.graphics.translate(dx, dy)
 
     --Draw bg
