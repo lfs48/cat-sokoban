@@ -78,29 +78,32 @@ end
 --Player controls
 function Level:keypressed(key)
 
-    --On arrow key press, move player in direction pressed
-    if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
-        local dx = 0
-        local dy = 0
-        if key == 'left' then dx = -1 end
-        if key == 'right' then dx = 1 end
-        if key == 'up' then dy = -1 end
-        if key == 'down' then dy = 1 end
+    --Only accept controls if level is not completed
+    if not self.completed then
+        --On arrow key press, move player in direction pressed
+        if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
+            local dx = 0
+            local dy = 0
+            if key == 'left' then dx = -1 end
+            if key == 'right' then dx = 1 end
+            if key == 'up' then dy = -1 end
+            if key == 'down' then dy = 1 end
 
-        local nextPos = {
-            x = self.playerPos.x + dx,
-            y = self.playerPos.y + dy,
-        }
+            local nextPos = {
+                x = self.playerPos.x + dx,
+                y = self.playerPos.y + dy,
+            }
 
-        if self:isValidMove(nextPos, dx, dy, false) then
-            --Update level with movement
-            self:updatePositions(nextPos, dx, dy)
-            --Determine if level is complete
-            if self:isComplete() then
-                self.completed = true
+            if self:isValidMove(nextPos, dx, dy, false) then
+                --Update level with movement
+                self:updatePositions(nextPos, dx, dy)
+                --Determine if level is complete
+                if self:isComplete() then
+                    self.completed = true
+                end
             end
-        end
 
+        end
     end
 end
 
