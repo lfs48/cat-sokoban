@@ -1,3 +1,5 @@
+local util = require('util')
+
 --Cell size
 local cellSize = 23
 
@@ -49,30 +51,35 @@ local pushNextCells = {
 Level = {}
 
 --Constructor
-function Level:new(o)
-    local level = o or {}
+function Level:new()
+    local level = {}
     setmetatable(level, self)
     self.__index = self
+    return level
+end
+
+--Initialize level
+function Level:initialize(layout)
+    --Initialize cells
+    self.cells = util.deepClone(layout)
 
     --Initialize player position
-    level.playerPos = {
+    self.playerPos = {
         x = 0,
         y = 0,
     }
-    for y, row in ipairs(level) do
+    for y, row in ipairs(layout) do
         for x, cell in ipairs(row) do
             if cell == cells.player or cell == cells.playerOnStorage then
-                level.playerPos.x = x
-                level.playerPos.y = y
+                self.playerPos.x = x
+                self.playerPos.y = y
                 break
             end
         end
     end
 
     --Field to track level completion
-    level.completed = false
-
-    return level
+    self.completed = false
 end
 
 --Player controls
@@ -113,10 +120,10 @@ function Level:isValidMove(pos, dx, dy, isPush)
     local y = pos.y
 
     --Prevent movement out of bounds
-    if y < 1 or y > #self then return false end
-    if x < 1 or x > #self[y] then return false end
+    if y < 1 or y > #self.cells then return false end
+    if x < 1 or x > #self.cells[y] then return false end
 
-    local cell = self[y][x]
+    local cell = self.cells[y][x]
 
     --Allow moving into pushable cell if one cell ahead is also valid
     if not isPush and pushPrevCells[cell] then
@@ -138,34 +145,34 @@ function Level:updatePositions(pos, dx, dy)
 
     --Update position
     local prevPos = self.playerPos
-    local prevCell = self[prevPos.y][prevPos.x]
-    local nextCell = self[pos.y][pos.x]
+    local prevCell = self.cells[prevPos.y][prevPos.x]
+    local nextCell = self.cells[pos.y][pos.x]
     self.playerPos = pos
 
     --If pushing, update next cell and one cell ahead
     if pushPrevCells[nextCell] then
         local pushX = pos.x + dx
         local pushY = pos.y + dy
-        local pushCell = self[pushY][pushX]
+        local pushCell = self.cells[pushY][pushX]
         --Update cell being pushed
-        self[pos.y][pos.x] = pushPrevCells[nextCell]
+        self.cells[pos.y][pos.x] = pushPrevCells[nextCell]
         --Update push destination cell
-        self[pushY][pushX] = pushNextCells[pushCell]
+        self.cells[pushY][pushX] = pushNextCells[pushCell]
     --If not pushing, then moving
     else
         --Update cell being moved into
-        self[pos.y][pos.x] = moveNextCells[nextCell]
+        self.cells[pos.y][pos.x] = moveNextCells[nextCell]
     end
 
     --Update cell being moved from
-    self[prevPos.y][prevPos.x] = movePrevCells[prevCell]
+    self.cells[prevPos.y][prevPos.x] = movePrevCells[prevCell]
 
 end
 
 --Determine if level has been completed
 --A level is complete if there are no unstored boxes
 function Level:isComplete()
-    for y, row in ipairs(self) do
+    for y, row in ipairs(self.cells) do
         for x, cell in ipairs(row) do
             if cell == cells.box then
                 return false
@@ -178,8 +185,8 @@ end
 --Draw level
 function Level:draw()
     --Calc level width and height
-    local width = #self[1] * cellSize
-    local height = #self * cellSize
+    local width = #self.cells[1] * cellSize
+    local height = #self.cells * cellSize
     
     --Center
     local windowWidth, windowHeight = love.window.getMode()
@@ -187,7 +194,7 @@ function Level:draw()
     local dy = (windowHeight - height) / 2
     love.graphics.translate(dx, dy)
 
-    for y, row in ipairs(self) do
+    for y, row in ipairs(self.cells) do
         for x, cell in ipairs(row) do
             if cell ~= cells.outOfBounds then
                 self:drawCell(x, y, cell)
@@ -222,7 +229,7 @@ function Level:drawCell(tableX, tableY, cell)
     --Draw cell text
     love.graphics.setColor(1, 1, 1)
     love.graphics.print(
-        self[tableY][tableX], --value
+        self.cells[tableY][tableX], --value
         x, --x pos
         y --y pos
     )
@@ -230,7 +237,8 @@ end
 
 --Draw level complete message
 function Level:drawComplete()
-    local message = 'Level Complete'
+    local line1 = 'Level Complete'
+    local line2 = 'Press any key to continue'
     local width = 200
     local height = 100
     local offset = 200
@@ -251,13 +259,20 @@ function Level:drawComplete()
         height --height
     )
 
-    --Draw cell text
+    --Draw text
     love.graphics.setColor(0, 0, 0)
     love.graphics.printf(
-        message, --value
+        line1, --value
         0, --x pos
-        height / 2, --y pos
+        height / 3, --y pos
         width, --limit
-        "center"
+        "center" --justify
+    )
+    love.graphics.printf(
+        line2, --value
+        0, --x pos
+        2 * height / 3, --y pos
+        width, --limit
+        "center" --justify
     )
 end
