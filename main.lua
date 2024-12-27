@@ -2,7 +2,7 @@ if arg[2] == "debug" then
     require("lldebugger").start()
 end
 
-Level = require('level')
+Map = require('map')
 
 Layouts = {
     {
@@ -44,26 +44,26 @@ Layouts = {
 function love.load()
 
     --Instantiate levels
-    GameLevels = {}
+    GameMaps = {}
     for i=1,#Layouts do
-        local NewLevel = Level:new()
-        GameLevels[i] = NewLevel
+        local NewLevel = Map:new()
+        GameMaps[i] = NewLevel
     end
 
     --Initialize first level
-    ActiveLevelIndex = 1
-    GameLevels[1]:initialize(Layouts[1])
+    ActiveMapIndex = 1
+    GameMaps[1]:initialize(Layouts[1])
 
 end
 
 local function getCurrentLevel()
-    return GameLevels[ActiveLevelIndex]
+    return GameMaps[ActiveMapIndex]
 end
 
-local function advanceLevel()
-    ActiveLevelIndex = (ActiveLevelIndex + 1) % 3 + 1
-    local layout = Layouts[ActiveLevelIndex]
-    GameLevels[ActiveLevelIndex]:initialize(layout)
+local function advanceMap()
+    ActiveMapIndex = (ActiveMapIndex + 1) % 3 + 1
+    local layout = Layouts[ActiveMapIndex]
+    GameMaps[ActiveMapIndex]:initialize(layout)
 end
 
 function love.keypressed(key)
@@ -73,7 +73,7 @@ function love.keypressed(key)
         getCurrentLevel():keypressed(key)
     --If current level is completed, press any key to continue to next level
     else
-        advanceLevel()
+        advanceMap()
     end
 end
 

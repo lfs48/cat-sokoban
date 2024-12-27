@@ -1,11 +1,11 @@
 local util = require('util')
 
-local Level = {}
+local Map = {}
 
 --Cell size
 local cellSize = 23
 
---Level cell symbols and colors
+--Map cell symbols and colors
 local cells = {
     player = '@',
     playerOnStorage = '+',
@@ -69,15 +69,15 @@ local function findPlayerPos(state)
 end
 
 --Constructor
-function Level:new()
-    local level = {}
-    setmetatable(level, self)
+function Map:new()
+    local map = {}
+    setmetatable(map, self)
     self.__index = self
-    return level
+    return map
 end
 
---Initialize level
-function Level:initialize(layout)
+--Initialize Map
+function Map:initialize(layout)
     --Initialize gamestate
     self.states = {
         util.deepClone(layout)
@@ -86,26 +86,26 @@ function Level:initialize(layout)
     --Initialize player position
     self.playerPos = findPlayerPos(layout)
 
-    --Field to track level completion
+    --Field to track Map completion
     self.completed = false
 
 end
 
 --Get current gamestate (last entry in states table)
-function Level:currentState()
+function Map:currentState()
     return self.states[#self.states]
 end
 
 --Update gamestate and player position
-function Level:advanceState(gameState, playerPos)
+function Map:advanceState(gameState, playerPos)
     table.insert(self.states, gameState)
     self.playerPos = playerPos
 end
 
 --Player controls
-function Level:keypressed(key)
+function Map:keypressed(key)
 
-    --Only accept controls if level is not completed
+    --Only accept controls if Map is not completed
     if not self.completed then
         --On arrow key or WASD press, move player in direction pressed
         local dx = 0
@@ -126,7 +126,7 @@ function Level:keypressed(key)
                 --Update gamestate
                 local newState = self:calcNewState(nextPos, dx, dy)
                 self:advanceState(newState, nextPos)
-                --Determine if level is complete
+                --Determine if map is complete
                 if self:isComplete() then
                     self.completed = true
                 end
@@ -138,7 +138,7 @@ function Level:keypressed(key)
             self:undoLastMove()
         end
 
-        --On R press, reset level to initial state
+        --On R press, reset Map to initial state
         if key =='r' then
             self:reset()
         end
@@ -146,7 +146,7 @@ function Level:keypressed(key)
 end
 
 --Determine if player can move to a position
-function Level:isValidMove(pos, dx, dy, isPush)
+function Map:isValidMove(pos, dx, dy, isPush)
     local x = pos.x
     local y = pos.y
 
@@ -172,7 +172,7 @@ function Level:isValidMove(pos, dx, dy, isPush)
 end
 
 --Determine and return new gamestate
-function Level:calcNewState(newPos, dx, dy)
+function Map:calcNewState(newPos, dx, dy)
     local newState = util.deepClone(self:currentState())
 
     --Update position
@@ -202,9 +202,9 @@ function Level:calcNewState(newPos, dx, dy)
     return newState
 end
 
---Determine if level has been completed
---A level is complete if there are no unstored boxes
-function Level:isComplete()
+--Determine if map has been completed
+--A map is complete if there are no unstored boxes
+function Map:isComplete()
     for y, row in ipairs(self:currentState()) do
         for x, cell in ipairs(row) do
             if cell == cells.box then
@@ -216,20 +216,20 @@ function Level:isComplete()
 end
 
 --Undo last move by returning to previous gamestate
-function Level:undoLastMove()
+function Map:undoLastMove()
     table.remove(self.states)
     self.playerPos = findPlayerPos(self:currentState())
 end
 
---Reset level to initial state
-function Level:reset()
+--Reset Map to initial state
+function Map:reset()
     local layout = util.deepClone(self.states[1])
     self:initialize(layout)
 end
 
---Draw level
-function Level:draw()
-    --Calc level width and height
+--Draw map
+function Map:draw()
+    --Calc Map width and height
     local width = #self:currentState()[1] * cellSize
     local height = #self:currentState() * cellSize
     
@@ -254,8 +254,8 @@ function Level:draw()
     end
 end
 
---Draw a level cell
-function Level:drawCell(tableX, tableY, cell)
+--Draw a map cell
+function Map:drawCell(tableX, tableY, cell)
     --Calc graphics position based on table coords
     local x = (tableX - 1) * cellSize
     local y = (tableY - 1) * cellSize
@@ -280,9 +280,9 @@ function Level:drawCell(tableX, tableY, cell)
     )
 end
 
---Draw level complete message
-function Level:drawComplete()
-    local line1 = 'Level Complete'
+--Draw map complete message
+function Map:drawComplete()
+    local line1 = 'Map Complete'
     local line2 = 'Press any key to continue'
     local width = 200
     local height = 100
@@ -322,4 +322,4 @@ function Level:drawComplete()
     )
 end
 
-return Level
+return Map
