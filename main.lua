@@ -1,79 +1,93 @@
+--Debug
 if arg[2] == "debug" then
     require("lldebugger").start()
 end
 
+--Imports
+Level = require('level')
 Map = require('map')
 
-Layouts = {
+--Vars
+local gameLevels = {}
+local activeLevelIndex = 0
+local levelLayouts = {
+    --Level 1
     {
-        {'#', '#', '#', '#', '#'},
-        {'#', '@', ' ', 'x', '#'},
-        {'#', ' ', ' ', ' ', '#'},
-        {'#', 'x', ' ', ' ', '#'},
-        {'#', ' ', ' ', 'x', '#'},
-        {'#', 'x', '$', 'x', '#'},
-        {'#', 'x', '*', ' ', '#'},
-        {'#', ' ', '*', 'x', '#'},
-        {'#', ' ', '*', ' ', '#'},
-        {'#', 'x', '*', 'x', '#'},
-        {'#', '#', '#', '#', '#'},
+        --Level 1 Map 1
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', '@', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', '#'},
+            {'#', 'x', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
+        --Level 1 Map 2
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '@', '#'},
+            {'#', ' ', '$', ' ', '#'},
+            {'#', 'x', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
     },
+    --Level 2
     {
-        {'#', '#', '#', '#', '#', ' ', ' ', ' ', ' '},
-        {'#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' '},
-        {'#', '@', '$', ' ', '#', ' ', '#', '#', '#'},
-        {'#', ' ', ' ', ' ', '#', ' ', '#', 'x', '#'},
-        {'#', '#', '#', ' ', '#', '#', '#', 'x', '#'},
-        {' ', '#', '#', ' ', ' ', ' ', ' ', 'x', '#'},
-        {' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
-        {' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
-        {' ', '#', '#', '#', '#', '#', ' ', ' ', ' '},
-    },
-    {
-        {' ', '#', '#', '#', '#', ' ', ' ', ' '},
-        {' ', '#', '@', ' ', '#', '#', '#', ' '},
-        {' ', '#', ' ', '$', ' ', ' ', '#', ' '},
-        {'#', '#', '#', ' ', '#', ' ', '#', '#'},
-        {'#', 'x', '#', ' ', '#', ' ', ' ', '#'},
-        {'#', 'x', ' ', ' ', ' ', '#', ' ', '#'},
-        {'#', 'x', ' ', ' ', ' ', ' ', ' ', '#'},
-        {'#', '#', '#', '#', '#', '#', '#', '#'},
+        --Level 2 Map 1
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '@', '#'},
+            {'#', ' ', '$', ' ', '#'},
+            {'#', 'x', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
+        --Level 2 Map 2
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', '@', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', '#'},
+            {'#', 'x', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
     },
 }
 
 function love.load()
 
     --Instantiate levels
-    GameMaps = {}
-    for i=1,#Layouts do
-        local NewLevel = Map:new()
-        GameMaps[i] = NewLevel
+    for _, layouts in ipairs(levelLayouts) do
+        local level = Level:new()
+        table.insert(gameLevels, level)
+        --Populate level with maps
+        local maps = {}
+        for _, layout in ipairs(layouts) do
+            local map = Map:new(layout)
+            table.insert(maps, map)
+        end
+        level:initialize(maps)
     end
 
-    --Initialize first level
-    ActiveMapIndex = 1
-    GameMaps[1]:initialize(Layouts[1])
+    activeLevelIndex = 1
 
 end
 
+--Return the current level
 local function getCurrentLevel()
-    return GameMaps[ActiveMapIndex]
+    return gameLevels[activeLevelIndex]
 end
 
-local function advanceMap()
-    ActiveMapIndex = (ActiveMapIndex + 1) % 3 + 1
-    local layout = Layouts[ActiveMapIndex]
-    GameMaps[ActiveMapIndex]:initialize(layout)
+--Advance game to the next level
+local function advanceLevel()
+    activeLevelIndex = activeLevelIndex + 1
 end
 
 function love.keypressed(key)
-    --If current level is uncompleted, capture keypress for level controls
+    --If current level is uncompleted, pass input to level
     local level = getCurrentLevel()
-    if not level.completed then
-        getCurrentLevel():keypressed(key)
+    if not level:isComplete() then
+        level:keypressed(key)
     --If current level is completed, press any key to continue to next level
     else
-        advanceMap()
+        advanceLevel()
     end
 end
 

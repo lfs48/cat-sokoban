@@ -69,26 +69,40 @@ local function findPlayerPos(state)
 end
 
 --Constructor
-function Map:new()
+function Map:new(initialState)
     local map = {}
     setmetatable(map, self)
     self.__index = self
+    if initialState then map:initialize(initialState) end
     return map
 end
 
 --Initialize Map
-function Map:initialize(layout)
+function Map:initialize(initialState)
     --Initialize gamestate
     self.states = {
-        util.deepClone(layout)
+        util.deepClone(initialState)
     }
 
     --Initialize player position
-    self.playerPos = findPlayerPos(layout)
+    self.playerPos = findPlayerPos(initialState)
 
-    --Field to track Map completion
+    --Field to track map completion
     self.completed = false
 
+    --Field used for anchor point to draw map from
+    self.anchor = {
+        x = 0,
+        y = 0,
+    }
+end
+
+--Setters
+function Map:setAnchor(x, y)
+    self:setAnchor({
+        x = x,
+        y = y,
+    })
 end
 
 --Get current gamestate (last entry in states table)
@@ -230,14 +244,14 @@ end
 --Draw map
 function Map:draw()
     --Calc Map width and height
-    local width = #self:currentState()[1] * cellSize
-    local height = #self:currentState() * cellSize
+    -- local width = #self:currentState()[1] * cellSize
+    -- local height = #self:currentState() * cellSize
     
-    --Center
-    local windowWidth, windowHeight = love.window.getMode()
-    local dx = (windowWidth - width) / 2
-    local dy = (windowHeight - height) / 2
-    love.graphics.translate(dx, dy)
+    -- --Center
+    -- local windowWidth, windowHeight = love.window.getMode()
+    -- local dx = (windowWidth - width) / 2
+    -- local dy = (windowHeight - height) / 2
+    -- love.graphics.translate(dx, dy)
 
     for y, row in ipairs(self:currentState()) do
         for x, cell in ipairs(row) do
@@ -247,11 +261,11 @@ function Map:draw()
         end
     end
 
-    love.graphics.translate(-dx, -dy)
+    -- love.graphics.translate(-dx, -dy)
 
-    if self.completed then
-        self:drawComplete()
-    end
+    -- if self.completed then
+    --     self:drawComplete()
+    -- end
 end
 
 --Draw a map cell
