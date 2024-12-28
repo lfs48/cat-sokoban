@@ -119,43 +119,40 @@ end
 --Player controls
 function Map:keypressed(key)
 
-    --Only accept controls if Map is not completed
-    if not self.completed then
-        --On arrow key or WASD press, move player in direction pressed
-        local dx = 0
-        local dy = 0
-        if key == 'left' or key == 'a' then dx = -1 end
-        if key == 'right' or key == 'd' then dx = 1 end
-        if key == 'up' or key == 'w' then dy = -1 end
-        if key == 'down' or key == 's' then dy = 1 end
+    --On arrow key or WASD press, move player in direction pressed
+    local dx = 0
+    local dy = 0
+    if key == 'left' or key == 'a' then dx = -1 end
+    if key == 'right' or key == 'd' then dx = 1 end
+    if key == 'up' or key == 'w' then dy = -1 end
+    if key == 'down' or key == 's' then dy = 1 end
 
-        if dx ~= 0 or dy ~= 0 then
+    if dx ~= 0 or dy ~= 0 then
 
-            local nextPos = {
-                x = self.playerPos.x + dx,
-                y = self.playerPos.y + dy,
-            }
+        local nextPos = {
+            x = self.playerPos.x + dx,
+            y = self.playerPos.y + dy,
+        }
 
-            if self:isValidMove(nextPos, dx, dy, false) then
-                --Update gamestate
-                local newState = self:calcNewState(nextPos, dx, dy)
-                self:advanceState(newState, nextPos)
-                --Determine if map is complete
-                if self:isComplete() then
-                    self.completed = true
-                end
+        if self:isValidMove(nextPos, dx, dy, false) then
+            --Update gamestate
+            local newState = self:calcNewState(nextPos, dx, dy)
+            self:advanceState(newState, nextPos)
+            --Determine if map is complete
+            if self:isComplete() then
+                self.completed = true
             end
         end
+    end
 
-        --On Z key press, undo last move
-        if key == 'z' and #self.states > 1 then
-            self:undoLastMove()
-        end
+    --On Z key press, undo last move
+    if key == 'z' and #self.states > 1 then
+        self:undoLastMove()
+    end
 
-        --On R press, reset Map to initial state
-        if key =='r' then
-            self:reset()
-        end
+    --On R press, reset Map to initial state
+    if key =='r' then
+        self:reset()
     end
 end
 
